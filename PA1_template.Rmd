@@ -1,29 +1,51 @@
 ---
-title: 'Reproducible Research: Assignment 1'
+title: 'Analysis Report: Exploring Daily Activity Patterns'
 author: "Meskerem"
 date: "2023-10-14"
 output:
+  pdf_document: default
   html_document:
     df_print: paged
+  word_document: default
 ---
 
-### This assignment makes use of data from a personal activity monitoring device. This device collects data at 5 minute intervals through out the day.The data consists of two months of data from an anonymous individual collected during the months of October and November, 2012 and include the number of steps taken in 5 minute intervals each day.
+### 
+Objective:
+This analysis aims to explore daily activity patterns based on data collected from a personal activity monitoring device. The data spans two months, from October to November 2012, and records the number of steps taken at 5-minute intervals throughout each day.
+
 
 
 ```{r, echo = TRUE}
 ### Code for reading in the dataset and/or processing the data
-### Loading and preprocessing the data
-# Imputing missing values
+# Load necessary libraries
+# The analysis starts by loading the dataset and preprocessing it.
+# Missing values are imputed, and the percentage of missing data is calculated.
+library(lubridate)
+library(ggplot2)
+library(dplyr)
+library(lattice)
+library(hexbin)
+
+# Read in the dataset and preprocess the data
 
 activity <- read.csv("activity.csv")
 activity$date <- as.Date(activity$date, format = "%Y-%m-%d")
-
+# Check the dimensions and structure of the dataset
 dim(activity)
 names(activity)
 head(activity)
 str(activity)
 
+# Impute missing values
+missing_values <- sum(is.na(activity$steps))
+total_records <- dim(activity)[1]
+missing_percentage <- missing_values / total_records
+
+
 ###What is mean total number of steps taken per day?
+# To understand daily activity patterns, the mean total number of steps taken per day is calculated.
+# The analysis reveals that on average, steps are taken per day.
+# The resulting bar plot visualizes the total steps taken each day.
 
 sum(is.na(activity$steps))/dim(activity)[[1]]
 library(lubridate)
@@ -32,30 +54,34 @@ length(unique(activity$date))
 library(ggplot2)
 
 ## What is the average daily activity pattern?
-
+# Calculate the mean total number of steps taken per day
 AM <- data.frame(tapply(activity$steps, activity$date, sum, na.rm = TRUE))
 AM$date <- rownames(AM)
 rownames(AM) <- NULL
 names(AM)[[1]] <- "Total Steps"
+# Create a bar plot to visualize the total steps by date
 png("plot1.png")
 ggplot(AM, aes(y = AM$`Total Steps`, x = AM$date)) + geom_bar(stat = "identity") + ylab("Total Steps") + xlab("Date") + ggtitle("Total Steps by date")
 dev.off()
 ggplot(AM, aes(y = AM$`Total Steps`, x = AM$date)) + geom_bar(stat = "identity") + ylab("Total Steps") + xlab("Date") + ggtitle("Total Steps by date")
 
-# Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day
+# To understand the distribution of daily steps, a histogram is created.
+
 
 qplot(AM$`Total Steps`, geom = "histogram", xlab = "Total Steps", ylab = "Counts", main = "Total Steps Historgram")
 png("plot2.png")
 qplot(AM$`Total Steps`, geom = "histogram", xlab = "Total Steps", ylab = "Counts", main = "Total Steps Historgram")
 dev.off()
-
+# Calculate and report the mean and median total number of steps taken per day
 library(dplyr)
 AM2 <- data.frame(round(tapply(activity$steps, activity$date, mean, na.rm = TRUE), 2))
 AM2$date <- rownames(AM2)
 rownames(AM2) <- NULL
 names(AM2)[[1]] <- "Mean Steps"
+# Calculate the median steps per day
 temp <- activity %>% select(date, steps) %>% group_by(date) %>% summarise(median(steps))
 names(temp)[[2]] <- "Median Steps"
+# Create a bar plot to visualize mean steps by date
 AM2$median <- temp$`Median Steps`
 AM2 <- AM2 %>% select(date, `Mean Steps`, median)
 AM3 <- AM2
@@ -65,11 +91,24 @@ png("plot3.png")
 ggplot(AM3, aes(x = AM3$date, y = AM3$`Mean Steps`)) + geom_bar(stat = "identity") + scale_x_date() + ylab("Mean Steps Every day") + xlab("Date") + ggtitle("Mean Steps by Date")
 dev.off()
 activity$interval <- factor(activity$interval)
+# Analyze activity patterns by interval
+# Activity Patterns by Interval:
+
+# The analysis explores activity patterns based on intervals.
+# The bar plot "Mean Steps by Date" shows how mean steps vary over the observed period.
+# A hexbin plot provides an alternative visualization of activity patterns across intervals.
 AM4 <- aggregate(data = activity, steps ~ date + interval, FUN = "mean")
 AM4 <- aggregate(data = AM4, steps ~ interval, FUN = "max")
+# Analyze missing data patterns
 AM5 <- activity
 AM5$Missing <- is.na(AM5$steps)
 AM5 <- aggregate(data = AM5, Missing ~ date + interval, FUN = "sum")
+# Create plots to visualize missing value distribution
+# Missing Data Patterns:
+
+# The analysis investigates patterns of missing data.
+# Two plots are created to visualize missing data distribution by date and by interval.
+
 AM5.1 <- data.frame(tapply(AM5$Missing, AM5$date, sum))
 AM5.1$date <- rownames(AM5.1)
 rownames(AM5.1) <- NULL
@@ -93,6 +132,7 @@ AM5.4 <- activity
 AM5.4$weekday <- wday(AM5.4$date, label = TRUE)
 # What is mean total number of steps taken per day?
 AM5.5 <- aggregate(data = AM5.4, steps ~ interval + weekday, FUN = "mean", na.rm = TRUE)
+# Create a histogram of total steps taken post-imputation
 AM5.6 <- merge(x = AM5.4, y = AM5.5, by.x = c("interval", "weekday"), by.y = c("interval", "weekday"), all.x = TRUE)
 AM5.6$Steps.Updated <- 0
 for (i in 1:dim(AM5.6)[[1]]) {
@@ -104,6 +144,9 @@ for (i in 1:dim(AM5.6)[[1]]) {
 }
 
 # Are there differences in activity patterns between weekdays and weekends??
+# The analysis explores whether there are differences in activity patterns between weekdays and weekends.
+# A histogram of total steps taken post-imputation is created.
+# The panel plot "Mean steps across intervals by Weekend and Weekday" provides insights into activity patterns by # segmenting data based on weekdays and weekends.
 
 AM5.6 <- AM5.6 %>% select(date, weekday, interval, Steps.Updated)
 names(AM5.6)[[4]] <- "Steps"
@@ -114,9 +157,11 @@ qplot(AM5.6$Steps, geom = "histogram", main = "Total steps taken histogram post 
 AM6 <- AM5.6
 levels(AM6$weekday) <- c(1, 2, 3, 4, 5, 6, 7)
 AM6$WDWE <- AM6$weekday %in% c(1, 2, 3, 4, 5)
+# Create a panel plot containing a time series plot
 AM6.1 <- aggregate(data = AM6, Steps ~ interval + WDWE, mean, na.rm = TRUE)
 AM6.1$WDWE <- as.factor(AM6.1$WDWE)
 levels(AM6.1$WDWE) <- c("Weekend", "Weekday")
+# Create a plot to visualize mean steps across intervals by weekend and weekday
 png("plot5.png")
 ggplot(data = AM6.1, aes(y = Steps, x = interval, group = 1, color = WDWE)) + geom_line() + scale_x_discrete(breaks = seq(0, 2500, by = 300)) + ylab("Mean Steps") + xlab("Intervals") + ggtitle("Mean steps across intervals by Weekend and Weekday")
 dev.off()
@@ -132,10 +177,12 @@ hexbinplot(data = AM6.1, Steps ~ interval | WDWE, aspect = 1, bins = 50)
 png("plot6.png")
 xyplot(data = AM6.1, Steps ~ interval | WDWE, grid = TRUE, type = c("p", "smooth"), lwd = 4, panel = panel.smoothScatter)
 dev.off()
-
+# Create hexbin plots for steps across intervals by weekend and weekday
 png("plot7.png")
 hexbinplot(data = AM6.1, Steps ~ interval | WDWE, aspect = 1, bins = 50)
 dev.off()
+#  Summary:
+#  This analysis provides insights into daily activity patterns, missing data distribution, and differences in  activity patterns between weekdays and weekends. 
 
 
 
