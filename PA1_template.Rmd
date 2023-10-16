@@ -100,7 +100,7 @@ for (i in 1:dim(AM5.6)[[1]]) {
   }
 }
 
-# Are there differences in activity patterns between weekdays and weekends?
+# Are there differences in activity patterns between weekdays and weekends??
 
 AM5.6 <- AM5.6 %>% select(date, weekday, interval, Steps.Updated)
 names(AM5.6)[[4]] <- "Steps"
@@ -126,7 +126,7 @@ library(lattice)
 xyplot(data = AM6.1, Steps ~ interval | WDWE, grid = TRUE, type = c("p", "smooth"), lwd = 4, panel = panel.smoothScatter)
 library(hexbin)
 hexbinplot(data = AM6.1, Steps ~ interval | WDWE, aspect = 1, bins = 50)
-png("plott6.png")
+png("plot6.png")
 xyplot(data = AM6.1, Steps ~ interval | WDWE, grid = TRUE, type = c("p", "smooth"), lwd = 4, panel = panel.smoothScatter)
 dev.off()
 
